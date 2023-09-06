@@ -194,10 +194,9 @@ From the terraform execution output we can see that gcloud command execution sta
 
 1. DO NOT USE `depends_on` on modules.
 
+1. Need proper integration test environment catch terraform plan issues
+
 ## Clean up
 ```bash
 terraform destroy
 ```
-
-1. Need proper integration test environment catch terraform plan issues
-
