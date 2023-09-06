@@ -7,6 +7,14 @@ git clone https://github.com/kingman/tf-dont-do-depends-on-module-demo.git
 cd tf-dont-do-depends-on-module-demo
 SOURCE_ROOT=$(pwd)
 ```
+### Create terraform.tfvars file
+```bash
+code "${SOURCE_ROOT}/terraform/demo/terraform.tfvars"
+```
+Add:
+```tf
+project_id = "demo-project-123"
+```
 ## Module A
 
 ### Add module
@@ -49,7 +57,7 @@ We get the `no such file or directory` error.
 
 ### Fix
 Add `depends_on`:
-```
+```tf
 depends_on = [ local_file.root_configuration ]
 ```
 
@@ -70,7 +78,7 @@ module_a_name = "demo-project-123-demo-suffix"
 Error gone! All good! Right?
 
 Clean:
-```
+```bash
 terraform destroy
 ```
 
@@ -80,7 +88,7 @@ terraform destroy
 code "${SOURCE_ROOT}/terraform/demo/modules/module-a/main.tf"
 ```
 Add:
-```
+```tf
 module "gcloud_project_get" {
   source          = "terraform-google-modules/gcloud/google"
   version         = "3.1.2"
@@ -120,7 +128,7 @@ Some googling lead to this [issue](https://github.com/terraform-google-modules/t
 
 ### Fix
 Replace `depends_on` with `module_depends_on`
-```
+```bash
 code "${SOURCE_ROOT}/terraform/demo/main.tf"
 ```
 ### Test
@@ -150,11 +158,11 @@ Lets look at the [local_file resource doc](https://registry.terraform.io/provide
 The `id` attribute which contains the hexadecimal encoding of the SHA1 checksum of the file content, should only have value when the file is created. Lets use it to delay the terraform evaluation!
 
 Change the module variable assigment from:
-```
+```tf
 root_config_file_path = local_file.root_configuration.filename
 ```
 to:
-```
+```tf
 root_config_file_path = local_file.root_configuration.id != "" ? local_file.root_configuration.filename : ""
 ```
 
