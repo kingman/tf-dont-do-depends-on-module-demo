@@ -1,4 +1,8 @@
-## Setup envs
+## Clone the repo
+```bash
+git clone https://github.com/kingman/tf-dont-do-depends-on-module-demo.git
+```
+## Setup environment
 ```bash
 cd tf-dont-do-depends-on-module-demo
 SOURCE_ROOT=$(pwd)
@@ -20,7 +24,7 @@ module "module_a" {
 }
 
 output "module_a_name" {
-  value = module.module_a.module_name  
+  value = module.module_a.module_name
 }
 ```
 
@@ -132,7 +136,12 @@ An argument named "module_depends_on" is not expected here.
 What is happening? The gcloud module should work, because it used else where. Frustration!!!
 
 ## Get rid of depends_on
-In this case it's obvious that the `depends_on` on module is the culprit. Imagine that you have a module that consists of my resources, the debugging and root cause analysis would not be this simple. 
+In this case it's obvious that the `depends_on` on module is the culprit. Imagine that you have a module that consists of many resources, the debugging and the root cause analysis would not be this simple.
+
+## Issues with depends_on on module
+When `depends_on` meta-argument is added a module make all the resources and data sources of the module dependent of the objects specified in the `depends_on` meta-argument. This has effect on how terraform calculates the plan. More specifically even resources in a module is not dependent on the specified dependency objects, they still needs to wait for all actions to complete on the upstream objects before actions can be performed on themselfes. In our case the **gcloud module** inside of **module-a** becomes dependent to **local_file** resource, this prevents terraform from calculating the plan for the **gcloud module**.
+
+`depends_on` meta-argument also effects on how terraform apply changes/updates. In our case any changes done on **local_file** resource would force in all the resources in **module-a** are replace, even the changes don't effects the actual properties of the resources.
 
 ### Express the explicit dependency
 The issue we face is that terraform plan is greedy it try to evaluate all the values that are available at the planning stage. The value of `local_file.root_configuration.filename` is known at the planning stage which lead to terraform try to read the file which does not exist. We need add dependency to an attribute that is only known after the file is create and delays terraform evaluation of the variable value.
@@ -199,4 +208,6 @@ From the terraform execution output we can see that gcloud command execution sta
 ## Clean up
 ```bash
 terraform destroy
+cd ../../..
+rm -rf tf-dont-do-depends-on-module-demo/
 ```
